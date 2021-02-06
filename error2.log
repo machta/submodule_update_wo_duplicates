@@ -1,0 +1,29 @@
+Occured just before error1.log but went awai with repeated run.
+It's probably just some random net error...
+
+
+updating  ./libs/uasdk.cpp
+updating  ./libs/CppUTest
+updating  ./libs/interfaces
+updating  ./libs/diag-api
+updating  ./libs/securityUtilities
+updating  ./libs/init-notify
+updating  ./tests/test_utils
+updating  ./libs/csopcua
+updating  ./libs/lic-conf-api
+Traceback (most recent call last):
+  File "../replace_submodules_by_links.py", line 46, in <module>
+    update_one_level()
+  File "../replace_submodules_by_links.py", line 38, in update_one_level
+    m.update(force=True)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/objects/submodule/base.py", line 513, in update
+    remote.fetch(progress=progress)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/remote.py", line 797, in fetch
+    res = self._get_fetch_info_from_stderr(proc, progress)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/remote.py", line 676, in _get_fetch_info_from_stderr
+    proc.wait(stderr=stderr_text)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/cmd.py", line 408, in wait
+    raise GitCommandError(self.args, status, errstr)
+git.exc.GitCommandError: Cmd('git') failed due to: exit code(128)
+  cmdline: git fetch --progress -v origin
+  stderr: 'fatal: Could not read from remote repository.

@@ -1,0 +1,62 @@
+After switch from csdiag
+    600fcf1ef476490df9c28672aa45a125494c82d9 (HEAD -> development)
+to
+    2ab740fba91e9302e7b9189e7944af35146b2dfb (HEAD -> test/lightweight-security)
+
+
+updating  ./libs/uasdk.cpp
+updating  ./libs/CppUTest
+updating  ./libs/interfaces
+updating  ./libs/diag-api
+updating  ./libs/securityUtilities
+updating  ./libs/init-notify
+updating  ./tests/test_utils
+updating  ./libs/csopcua
+updating  ./libs/lic-conf-api
+updating  ./libs/logging-api
+updating  ./libs/libiam
+updating  ./libs/interfaces/tests/CppUTest
+Traceback (most recent call last):
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/objects/submodule/base.py", line 1057, in module
+    repo = git.Repo(module_checkout_abspath)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/repo/base.py", line 130, in __init__
+    raise NoSuchPathError(epath)
+git.exc.NoSuchPathError: /home/ctdev/workspace/S2L2/CoreShieldDiagnosis/libs/interfaces/tests/CppUTest
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/objects/submodule/base.py", line 500, in update
+    mrepo = self.module()
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/util.py", line 68, in wrapper
+    return func(self, *args, **kwargs)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/objects/submodule/base.py", line 1062, in module
+    raise InvalidGitRepositoryError("No valid repository at %s" % module_checkout_abspath) from e
+git.exc.InvalidGitRepositoryError: No valid repository at /home/ctdev/workspace/S2L2/CoreShieldDiagnosis/libs/interfaces/tests/CppUTest
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "../replace_submodules_by_links.py", line 46, in <module>
+    update_one_level()
+  File "../replace_submodules_by_links.py", line 42, in update_one_level
+    update_one_level(m, cloned_mods)
+  File "../replace_submodules_by_links.py", line 38, in update_one_level
+    m.update(force=True)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/objects/submodule/base.py", line 542, in update
+    mrepo = self._clone_repo(self.repo, self.url, self.path, self.name, n=True, env=env)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/objects/submodule/base.py", line 257, in _clone_repo
+    clone = git.Repo.clone_from(url, module_checkout_path, **kwargs)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/repo/base.py", line 1032, in clone_from
+    return cls._clone(git, url, to_path, GitCmdObjectDB, progress, multi_options, **kwargs)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/repo/base.py", line 973, in _clone
+    finalize_process(proc, stderr=stderr)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/util.py", line 329, in finalize_process
+    proc.wait(**kwargs)
+  File "/home/ctdev/.local/lib/python3.6/site-packages/git/cmd.py", line 408, in wait
+    raise GitCommandError(self.args, status, errstr)
+git.exc.GitCommandError: Cmd('git') failed due to: exit code(128)
+  cmdline: git clone -n --separate-git-dir=/home/ctdev/workspace/S2L2/CoreShieldDiagnosis/.git/modules/libs/interfaces/modules/tests/CppUTest -v ssh://git@code.siemens.com/mo_mm_linux_distribution/s2l2.CppUTest.git /home/ctdev/workspace/S2L2/CoreShieldDiagnosis/libs/interfaces/tests/CppUTest
+  stderr: 'Cloning into '/home/ctdev/workspace/S2L2/CoreShieldDiagnosis/libs/interfaces/tests/CppUTest'...
+fatal: /home/ctdev/workspace/S2L2/CoreShieldDiagnosis/.git/modules/libs/interfaces/modules/tests/CppUTest already exists
+'

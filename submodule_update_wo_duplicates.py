@@ -4,22 +4,49 @@
 import subprocess, git, os
 
 
+# to make the output nice and aligned
+LINK_MSG   = "linking  "
+UPDATE_MSG = "updating "
+UNLINK_MSG = "unlinking"
+CLEAR_MSG  = "clearing "
+
+
 def bash(cmd, cwd=None):
     # print("+ bash:", cwd, cmd)
     return subprocess.run(["bash", "-c", cmd], #stderr=subprocess.DEVNULL,
         stdout=subprocess.PIPE, check=True, cwd=cwd).stdout.decode('utf-8')
 
-# to make the output nice and aligned
-LINK_MSG   = "linking  "
-UPDATE_MSG = "updating "
-UNLINK_MSG = "unlinking"
+
+def rm_rf(path):
+    bash(f"rm -rf '{path}'")
+    # shutil.rmtree(dst) # can't remove links
+
 
 def replace_by_link(src, dst):
     print(LINK_MSG, dst, "->", src)
-    bash(f"rm -rf '{dst}'")
-    # shutil.rmtree(dst) # can't remove links
+    rm_rf(dst)
     bash(f"ln -sr '{src}' '{dst}'")
     # os.symlink(src, dst) # can't do relative links (the -r switch)
+
+
+def clear_git_dir(submod, mod_path, submod_path):
+    try:
+        module = submod.module()
+    except:
+        module = None # Don't throw if there is no initialized module
+    if module:
+        d = module.git_dir
+        if not os.path.exists(d):
+            # For some reason it keeps giving me paths like /.git/modules/libs/...
+            # Try it with a leading dot as a fallback.
+            d = f".{d}"
+        if os.path.exists(d):
+            print(CLEAR_MSG, d)
+            # Delete submodule as explained here: https://stackoverflow.com/a/16162000/287933
+            # FIXME do the deinit w/ gitpython
+            bash(f"git submodule deinit -f -- '{submod_path}'", mod_path)
+            rm_rf(d)
+
 
 # FIXME doesn't work if change in a direct submodule is only staged, but not committed
 def update_one_level(mod = ".", cloned_mods = None):
@@ -38,6 +65,8 @@ def update_one_level(mod = ".", cloned_mods = None):
         key = (m.url, m.hexsha)
         cloned_before = cloned_mods.get(key)
         if cloned_before:
+            if not os.path.islink(m_path):
+                clear_git_dir(m, mod, m.path)
             replace_by_link(cloned_before, m_path)
         else:
             if os.path.islink(m_path):
@@ -53,6 +82,7 @@ def update_one_level(mod = ".", cloned_mods = None):
 
 if __name__ == "__main__":
     update_one_level()
+
 
 # update() doc:
 # https://github.com/gitpython-developers/GitPython/blob/24f75e7bae3974746f29aaecf6de011af79a675d/git/objects/submodule/base.py#L444

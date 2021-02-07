@@ -1,6 +1,8 @@
 import unittest, sys, os
 import tempfile
 
+import repo_diff
+
 sys.path.append(os.path.abspath(__file__ + "/../.."))
 from submodule_update_wo_duplicates import bash, update_one_level
 
@@ -28,18 +30,6 @@ def make_3_repos():
     add_submod("git2", "libs/git3", "git3")
     add_submod("git1", "libs/git3", "git3")
     add_submod("git1", "libs/git2", "git2")
-
-
-def repo_content(path):
-    return bash("find -L -type f | grep -v '\\.git' | sort | xargs tail -n 1000", path)
-
-def clean_clone_content(repo, rev):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        bash(f"git clone {os.path.abspath('git1')} {tmpdir}")
-        bash(f"git checkout {rev}", tmpdir)
-        bash(f"git submodule update --init --recursive", tmpdir)
-        content = repo_content(tmpdir)
-        return content
 
 
 def call_update(repo):
@@ -77,8 +67,8 @@ class TestBasic(unittest.TestCase):
         bash(f"git checkout c2", "clone_git1")
         call_update("clone_git1")
 
-        linked_content = repo_content("clone_git1")
-        expected_content = clean_clone_content("git1", "c2")
+        linked_content = repo_diff.repo_content("clone_git1")
+        expected_content = repo_diff.clean_clone_content("git1", "c2")
         self.assertEqual(linked_content, expected_content)
 
 
@@ -88,8 +78,8 @@ class TestBasic(unittest.TestCase):
         bash(f"git checkout add-git2", "clone_git1")
         call_update("clone_git1")
 
-        linked_content = repo_content("clone_git1")
-        expected_content = clean_clone_content("git1", "add-git2")
+        linked_content = repo_diff.repo_content("clone_git1")
+        expected_content = repo_diff.clean_clone_content("git1", "add-git2")
         self.assertEqual(linked_content, expected_content)
 
 
@@ -112,8 +102,8 @@ class TestBasic(unittest.TestCase):
         bash(f"git checkout downgrade-git3", "clone_git1")
         call_update("clone_git1")
 
-        linked_content = repo_content("clone_git1")
-        expected_content = clean_clone_content("git1", "downgrade-git3")
+        linked_content = repo_diff.repo_content("clone_git1")
+        expected_content = repo_diff.clean_clone_content("git1", "downgrade-git3")
         self.assertEqual(linked_content, expected_content)
 
 
@@ -138,8 +128,8 @@ class TestBasic(unittest.TestCase):
         bash(f"git checkout add-git2", "clone_git1")
         call_update("clone_git1")
 
-        linked_content = repo_content("clone_git1")
-        expected_content = clean_clone_content("git1", "add-git2")
+        linked_content = repo_diff.repo_content("clone_git1")
+        expected_content = repo_diff.clean_clone_content("git1", "add-git2")
         self.assertEqual(linked_content, expected_content)
 
 
@@ -167,8 +157,8 @@ class TestBasic(unittest.TestCase):
         bash(f"git checkout downgrade-git3", "clone_git1")
         call_update("clone_git1")
 
-        linked_content = repo_content("clone_git1")
-        expected_content = clean_clone_content("git1", "downgrade-git3")
+        linked_content = repo_diff.repo_content("clone_git1")
+        expected_content = repo_diff.clean_clone_content("git1", "downgrade-git3")
         self.assertEqual(linked_content, expected_content)
 
 

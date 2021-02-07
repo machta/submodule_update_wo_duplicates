@@ -31,7 +31,7 @@ def replace_by_link(src, dst):
     # Figure out how to do 'relative' links (the -r switch).
 
 
-def clear_git_dir(current_mod_path, mod, mod_path):
+def submod_git_dir(mod):
     try:
         module = mod.module()
     except:
@@ -43,11 +43,40 @@ def clear_git_dir(current_mod_path, mod, mod_path):
             # Try it with a leading dot as a fallback.
             d = f".{d}"
         if os.path.exists(d):
-            print(CLEAR_MSG, d)
-            # Delete submodule as explained here: https://stackoverflow.com/a/16162000/287933
-            # FIXME do the deinit w/ gitpython
-            bash(f"git submodule deinit -f -- '{mod_path}'", current_mod_path)
-            rm_rf(d)
+            return d
+    return None
+
+
+def clear_git_dir(current_mod_path, mod, mod_path):
+    git_dir = submod_git_dir(mod)
+    if git_dir:
+        print(CLEAR_MSG, git_dir)
+        # Delete submodule as explained here: https://stackoverflow.com/a/16162000/287933
+        # FIXME do the deinit w/ gitpython
+        bash(f"git submodule deinit -f -- '{mod_path}'", current_mod_path)
+        rm_rf(git_dir)
+
+
+def find_separate_git_dir_in_exception(gce):
+    for a in gce.command:
+        sa = a.split("--separate-git-dir=")
+        if len(sa) == 2:
+            return sa[1]
+    return None
+
+
+def do_update(mod):
+    try:
+        mod.update(force=True)
+    except git.exc.GitCommandError as gce:
+        git_dir = find_separate_git_dir_in_exception(gce)
+        if git_dir:
+            # If we get 'fatal: .git/modules/... already exists', try it again after clearing the dir.
+            # This is mostly an imperfection of gitpython. Normally git can overwrite the git dir without a problem.
+            rm_rf(git_dir)
+            mod.update(force=True)
+        else:
+            raise
 
 
 # FIXME doesn't work if change in a direct submodule is only staged, but not committed
@@ -75,7 +104,7 @@ def update_one_level(current_mod_path = ".", cloned_mods = None):
                 print(UNLINK_MSG, mod_full_path)
                 os.unlink(mod_full_path)
             print(UPDATE_MSG, mod_full_path)
-            mod.update(force=True)
+            do_update(mod)
             cloned_mods[key] = mod_full_path
             recurse_into.append(mod_full_path)
     for current_mod_path in recurse_into:

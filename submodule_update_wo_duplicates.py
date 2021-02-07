@@ -11,6 +11,7 @@ UNLINK_MSG = "unlinking"
 CLEAR_MSG  = "clearing "
 
 
+# FIXME to make it portable I need to get rid of this function
 def bash(cmd, cwd=None):
     # print("+ bash:", cwd, cmd)
     return subprocess.run(["bash", "-c", cmd], #stderr=subprocess.DEVNULL,
@@ -19,21 +20,22 @@ def bash(cmd, cwd=None):
 
 def rm_rf(path):
     bash(f"rm -rf '{path}'")
-    # shutil.rmtree(dst) # can't remove links
+    # FIXME use shutil.rmtree(path). But it can't remove links.
 
 
 def replace_by_link(src, dst):
     print(LINK_MSG, dst, "->", src)
     rm_rf(dst)
     bash(f"ln -sr '{src}' '{dst}'")
-    # os.symlink(src, dst) # can't do relative links (the -r switch)
+    # FIXME use os.symlink(src, dst).
+    # Figure out how to do 'relative' links (the -r switch).
 
 
-def clear_git_dir(submod, mod_path, submod_path):
+def clear_git_dir(current_mod_path, mod, mod_path):
     try:
-        module = submod.module()
+        module = mod.module()
     except:
-        module = None # Don't throw if there is no initialized module
+        module = None # Don't throw if the .git dir for this module isn't available
     if module:
         d = module.git_dir
         if not os.path.exists(d):
@@ -44,12 +46,12 @@ def clear_git_dir(submod, mod_path, submod_path):
             print(CLEAR_MSG, d)
             # Delete submodule as explained here: https://stackoverflow.com/a/16162000/287933
             # FIXME do the deinit w/ gitpython
-            bash(f"git submodule deinit -f -- '{submod_path}'", mod_path)
+            bash(f"git submodule deinit -f -- '{mod_path}'", current_mod_path)
             rm_rf(d)
 
 
 # FIXME doesn't work if change in a direct submodule is only staged, but not committed
-def update_one_level(mod = ".", cloned_mods = None):
+def update_one_level(current_mod_path = ".", cloned_mods = None):
     if not cloned_mods:
         # TODO Possible optimization: on the first level do a non-recursive update
         # on the whole repo. You will have to update all of them anyway.
@@ -60,24 +62,24 @@ def update_one_level(mod = ".", cloned_mods = None):
         # Do this for both the update at the start and for the recursive ones after that as well.
         cloned_mods = {}
     recurse_into = []
-    for m in git.Repo(mod).submodules:
-        m_path = os.path.join(mod, m.path)
-        key = (m.url, m.hexsha)
+    for mod in git.Repo(current_mod_path).submodules:
+        mod_full_path = os.path.join(current_mod_path, mod.path)
+        key = (mod.url, mod.hexsha)
         cloned_before = cloned_mods.get(key)
         if cloned_before:
-            if not os.path.islink(m_path):
-                clear_git_dir(m, mod, m.path)
-            replace_by_link(cloned_before, m_path)
+            if not os.path.islink(mod_full_path):
+                clear_git_dir(current_mod_path, mod, mod.path)
+            replace_by_link(cloned_before, mod_full_path)
         else:
-            if os.path.islink(m_path):
-                print(UNLINK_MSG, m_path)
-                os.unlink(m_path)
-            print(UPDATE_MSG, m_path)
-            m.update(force=True)
-            cloned_mods[key] = m_path
-            recurse_into.append(m_path)
-    for m in recurse_into:
-        update_one_level(m, cloned_mods)
+            if os.path.islink(mod_full_path):
+                print(UNLINK_MSG, mod_full_path)
+                os.unlink(mod_full_path)
+            print(UPDATE_MSG, mod_full_path)
+            mod.update(force=True)
+            cloned_mods[key] = mod_full_path
+            recurse_into.append(mod_full_path)
+    for current_mod_path in recurse_into:
+        update_one_level(current_mod_path, cloned_mods)
 
 
 if __name__ == "__main__":

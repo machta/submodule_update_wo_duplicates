@@ -83,6 +83,14 @@ def do_update(submod):
             raise
 
 
+def checked_out_sha(submod):
+    module = module_from_submod(submod)
+    if module:
+        return module.commit().hexsha
+    else:
+        return ""
+
+
 # FIXME doesn't work if change in a direct submodule is only staged, but not committed
 def update_one_level(current_mod_path = ".", cloned_mods = None):
     if not cloned_mods:
@@ -90,9 +98,6 @@ def update_one_level(current_mod_path = ".", cloned_mods = None):
         # on the whole repo. You will have to update all of them anyway.
         # Then just save all the hashes and URIs and you're done with the first level.
         # Doing the update in a batch will make it swifter.
-        # TODO Possible optimization: If hash before and after the update doesn't change
-        # for one repo, you don't have to recurse into the module at all.
-        # Do this for both the update at the start and for the recursive ones after that as well.
         cloned_mods = {}
     recurse_into = []
     for submod in git.Repo(current_mod_path).submodules:
@@ -107,8 +112,10 @@ def update_one_level(current_mod_path = ".", cloned_mods = None):
             if os.path.islink(mod_full_path):
                 print(UNLINK_MSG, mod_full_path)
                 os.unlink(mod_full_path)
-            print(UPDATE_MSG, mod_full_path)
-            do_update(submod)
+            # Do update only if we don't already have the right commit. Saves CPU time & network load.
+            if key[1] != checked_out_sha(submod):
+                print(UPDATE_MSG, mod_full_path)
+                do_update(submod)
             cloned_mods[key] = mod_full_path
             recurse_into.append(mod_full_path)
     for current_mod_path in recurse_into:

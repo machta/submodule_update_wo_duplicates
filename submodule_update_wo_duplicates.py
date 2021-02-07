@@ -88,21 +88,28 @@ def checked_out_sha(submod):
     if module:
         return module.commit().hexsha
     else:
-        return ""
+        return None
 
 
-# FIXME doesn't work if change in a direct submodule is only staged, but not committed
+def get_staged_files(index):
+    return [ item.a_path for item in index.diff("HEAD") ]
+
+
 def update_one_level(current_mod_path = ".", cloned_mods = None):
+    repo = git.Repo(current_mod_path)
+    index = None
     if not cloned_mods:
-        # TODO Possible optimization: on the first level do a non-recursive update
-        # on the whole repo. You will have to update all of them anyway.
-        # Then just save all the hashes and URIs and you're done with the first level.
-        # Doing the update in a batch will make it swifter.
+        # Special case for the first level recursion (i.e. the root repo)
+        index = repo.index
         cloned_mods = {}
     recurse_into = []
-    for submod in git.Repo(current_mod_path).submodules:
+    for submod in repo.submodules:
         mod_full_path = os.path.join(current_mod_path, submod.path)
-        key = (submod.url, submod.hexsha)
+        hexsha = submod.hexsha
+        if index and submod.path in get_staged_files(index):
+            # If submodule is staged, we use the currently checked out commit instead.
+            hexsha = checked_out_sha(submod) or hexsha
+        key = (submod.url, hexsha)
         cloned_before = cloned_mods.get(key)
         if cloned_before:
             if not os.path.islink(mod_full_path):

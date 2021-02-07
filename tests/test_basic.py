@@ -197,5 +197,25 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(linked_content, expected_content)
 
 
+    """
+    Test that when a direct submodule has a change staged, it will take priority.
+    """
+    def test_staged_change(self):
+        bash("git checkout c1", "git1/libs/git3")
+        git_commit("git1", "switch-git3-to-c1")
+
+        bash(f"git clone {os.path.abspath('git1')} clone_git1")
+
+        bash("git checkout after-setUp", "clone_git1")
+        call_update("clone_git1")
+        bash("git checkout c1", "clone_git1/libs/git3")
+        bash("git add libs/git3", "clone_git1")
+        call_update("clone_git1")
+
+        linked_content = repo_diff.repo_content("clone_git1")
+        expected_content = repo_diff.clean_clone_content("git1", "switch-git3-to-c1")
+        self.assertEqual(linked_content, expected_content)
+
+
 if __name__ == '__main__':
     unittest.main()

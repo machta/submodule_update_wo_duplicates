@@ -31,11 +31,15 @@ def replace_by_link(src, dst):
     # Figure out how to do 'relative' links (the -r switch).
 
 
-def submod_git_dir(mod):
+def module_from_submod(submod):
     try:
-        module = mod.module()
+        return submod.module()
     except:
-        module = None # Don't throw if the .git dir for this module isn't available
+        return None # Don't throw if the .git dir for this module isn't available
+
+
+def submod_git_dir(submod):
+    module = module_from_submod(submod)
     if module:
         d = module.git_dir
         if not os.path.exists(d):
@@ -47,13 +51,13 @@ def submod_git_dir(mod):
     return None
 
 
-def clear_git_dir(current_mod_path, mod, mod_path):
-    git_dir = submod_git_dir(mod)
+def clear_git_dir(current_mod_path, submod, submod_path):
+    git_dir = submod_git_dir(submod)
     if git_dir:
         print(CLEAR_MSG, git_dir)
         # Delete submodule as explained here: https://stackoverflow.com/a/16162000/287933
         # FIXME do the deinit w/ gitpython
-        bash(f"git submodule deinit -f -- '{mod_path}'", current_mod_path)
+        bash(f"git submodule deinit -f -- '{submod_path}'", current_mod_path)
         rm_rf(git_dir)
 
 
@@ -65,16 +69,16 @@ def find_separate_git_dir_in_exception(gce):
     return None
 
 
-def do_update(mod):
+def do_update(submod):
     try:
-        mod.update(force=True)
+        submod.update(force=True)
     except git.exc.GitCommandError as gce:
         git_dir = find_separate_git_dir_in_exception(gce)
         if git_dir:
             # If we get 'fatal: .git/modules/... already exists', try it again after clearing the dir.
             # This is mostly an imperfection of gitpython. Normally git can overwrite the git dir without a problem.
             rm_rf(git_dir)
-            mod.update(force=True)
+            submod.update(force=True)
         else:
             raise
 
@@ -91,20 +95,20 @@ def update_one_level(current_mod_path = ".", cloned_mods = None):
         # Do this for both the update at the start and for the recursive ones after that as well.
         cloned_mods = {}
     recurse_into = []
-    for mod in git.Repo(current_mod_path).submodules:
-        mod_full_path = os.path.join(current_mod_path, mod.path)
-        key = (mod.url, mod.hexsha)
+    for submod in git.Repo(current_mod_path).submodules:
+        mod_full_path = os.path.join(current_mod_path, submod.path)
+        key = (submod.url, submod.hexsha)
         cloned_before = cloned_mods.get(key)
         if cloned_before:
             if not os.path.islink(mod_full_path):
-                clear_git_dir(current_mod_path, mod, mod.path)
+                clear_git_dir(current_mod_path, submod, submod.path)
             replace_by_link(cloned_before, mod_full_path)
         else:
             if os.path.islink(mod_full_path):
                 print(UNLINK_MSG, mod_full_path)
                 os.unlink(mod_full_path)
             print(UPDATE_MSG, mod_full_path)
-            do_update(mod)
+            do_update(submod)
             cloned_mods[key] = mod_full_path
             recurse_into.append(mod_full_path)
     for current_mod_path in recurse_into:

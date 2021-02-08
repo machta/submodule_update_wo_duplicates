@@ -24,6 +24,7 @@ def rm_rf(path):
 
 
 def replace_by_link(src, dst):
+    # FIXME if the correct link already exists, skip the rest
     print(LINK_MSG, dst, "->", src)
     rm_rf(dst)
     bash(f"ln -sr '{src}' '{dst}'")
@@ -130,6 +131,7 @@ def update_one_level(current_mod_path = ".", cloned_mods = None):
 
 
 if __name__ == "__main__":
+    # TODO: Add some switches: -g/-v (debug), etc.
     update_one_level()
 
 

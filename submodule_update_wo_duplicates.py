@@ -1,3 +1,9 @@
+# Replacement for `git submodule update --init --recursive --force` that saves
+# space by symlinking duplicate repositories.
+#
+# Warning: it will discard all changes you make in the submodules (including
+# unpushed commits), and it will always reset submodules to the proper commits!
+#
 # Prerequisites:
 #   pip3 install gitpython
 

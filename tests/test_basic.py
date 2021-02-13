@@ -81,6 +81,7 @@ class TestBasic(unittest.TestCase):
 
         bash("git checkout after-setUp", "clone_git1")
         call_update("clone_git1")
+        call_update("clone_git1") # repeated use should have no effect
 
         linked_content = repo_diff.repo_content("clone_git1")
         expected_content = repo_diff.clean_clone_content("git1", "after-setUp")

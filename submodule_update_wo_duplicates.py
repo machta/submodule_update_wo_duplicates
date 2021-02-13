@@ -5,10 +5,11 @@ import subprocess, git, os
 
 
 # to make the output nice and aligned
-LINK_MSG   = "linking  "
-UPDATE_MSG = "updating "
-UNLINK_MSG = "unlinking"
-CLEAR_MSG  = "clearing "
+LINK_MSG   = "linking    "
+UPDATE_MSG = "updating   "
+UNLINK_MSG = "unlinking  "
+CLEAR_MSG  = "clearing   "
+CHECK_MSG  = "checked out"
 
 
 # FIXME to make it portable I need to get rid of this function
@@ -84,8 +85,9 @@ def do_update(submod):
             raise
 
 
-def checked_out_sha(submod):
-    module = module_from_submod(submod)
+def checked_out_sha(submod, module=None):
+    if not module:
+        module = module_from_submod(submod)
     if module:
         return module.commit().hexsha
     else:
@@ -120,10 +122,16 @@ def update_one_level(current_mod_path = ".", cloned_mods = None):
             if os.path.islink(mod_full_path):
                 print(UNLINK_MSG, mod_full_path)
                 os.unlink(mod_full_path)
+            submod_repo = module_from_submod(submod)
             # Do update only if we don't already have the right commit. Saves CPU time & network load.
-            if key[1] != checked_out_sha(submod):
-                print(UPDATE_MSG, mod_full_path)
-                do_update(submod)
+            if key[1] != checked_out_sha(submod, submod_repo):
+                try:
+                    # Also try first checking out the commit.
+                    submod_repo.head.reset(commit=key[1], index=True, working_tree=True)
+                    print(CHECK_MSG, mod_full_path)
+                except: # Update will be used as backup, if repo is empty, or checkout fails.
+                    print(UPDATE_MSG, mod_full_path)
+                    do_update(submod)
             cloned_mods[key] = mod_full_path
             recurse_into.append(mod_full_path)
     for current_mod_path in recurse_into:

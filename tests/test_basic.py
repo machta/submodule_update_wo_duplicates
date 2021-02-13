@@ -45,6 +45,7 @@ def call_update(repo):
 class TestBasic(unittest.TestCase):
 
     def setUp(self):
+        os.environ["DEBUG_ENABLED"] = "1"
         self.tmpdiro = tempfile.TemporaryDirectory()
         self.tmpdir = self.tmpdiro.name
         # unlike TemporaryDirectory() doesn't remove the dir in dtor

@@ -11,6 +11,11 @@ UNLINK_MSG = "unlinking  "
 CLEAR_MSG  = "clearing   "
 CHECK_MSG  = "checked out"
 
+# export DEBUG_ENABLED=1 to enable extra debug info
+def dbg_print(*args):
+    if "DEBUG_ENABLED" in os.environ:
+        print(*args)
+
 
 # FIXME to make it portable I need to get rid of this function
 def bash(cmd, cwd=None):
@@ -27,6 +32,7 @@ def rm_rf(path):
 def replace_by_link(src, dst):
     # If the correct link already exists, skip the rest.
     if os.path.islink(dst) and os.path.realpath(dst) == os.path.realpath(src):
+        dbg_print("already linked", dst, "->", src)
         return
     print(LINK_MSG, dst, "->", src)
     rm_rf(dst)
@@ -78,6 +84,7 @@ def do_update(submod):
         submod.update(force=True)
     except git.exc.GitCommandError as gce:
         git_dir = find_separate_git_dir_in_exception(gce)
+        dbg_print("update failed; try again after removing", git_dir)
         if git_dir:
             # If we get 'fatal: .git/modules/... already exists', try it again after clearing the dir.
             # This is mostly an imperfection of gitpython. Normally git can overwrite the git dir without a problem.
@@ -101,6 +108,7 @@ def get_staged_files(index):
 
 
 def update_one_level(current_mod_path = ".", cloned_mods = None):
+    dbg_print(f"entering update_one_level('{current_mod_path}')")
     repo = git.Repo(current_mod_path)
     index = None
     if not cloned_mods:
@@ -141,7 +149,6 @@ def update_one_level(current_mod_path = ".", cloned_mods = None):
 
 
 if __name__ == "__main__":
-    # TODO: Add some switches: -g/-v (debug), etc.
     update_one_level()
 
 

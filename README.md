@@ -2,7 +2,7 @@
 
 Replacement for `git submodule update --init --recursive` that saves space by symlinking duplicate repositories.
 
-**Usage:**
+## Usage
 
 Just run `submodule_update_wo_duplicates.py` from the root directory of your Git repo like so:
 
@@ -22,7 +22,7 @@ Then you can use it like a regular git command:
 $ git dedup_sub_update
 ```
 
-**Prerequisites:**
+### Prerequisites
 
 ```bash
 $ pip3 install gitpython

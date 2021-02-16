@@ -6,11 +6,27 @@ Replacement for `git submodule update --init --recursive` that saves space by sy
 
 Just run `submodule_update_wo_duplicates.py` from the root directory of your Git repo like so:
 
-    $ python3 submodule_update_wo_duplicates.py
+```bash
+$ python3 submodule_update_wo_duplicates.py
+```
+
+Or you can install it into your path under a name starting with `git-`. Example (assuming `$HOME/bin` is in your path):
+
+```bash
+$ FILE_NAME=~/bin/git-dedup_sub_update ; echo -e > "$FILE_NAME" '#!/bin/sh\npython3 ~/path/to-file/submodule_update_wo_duplicates.py' && chmod +x "$FILE_NAME"
+```
+
+Then you can use it like a regular git command:
+
+```bash
+$ git dedup_sub_update
+```
 
 **Prerequisites:**
 
-    $ pip3 install gitpython
+```bash
+$ pip3 install gitpython
+```
 
 ## Motivation
 
